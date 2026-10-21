@@ -16,7 +16,7 @@ spec:
           - clusters: {}
           # One Application per component folder under overlays/<cluster>/
           - git:
-              repoURL: https://github.com/<org>/platform-configuration.git
+              repoURL: https://github.com/milles9393/platform-configuration.git
               revision: main
               directories:
                 - path: 'overlays/{{ .name }}/*'
@@ -29,7 +29,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/<org>/platform-configuration.git
+        repoURL: https://github.com/milles9393/platform-configuration.git
         targetRevision: main
         path: '{{ .path.path }}'
       destination:

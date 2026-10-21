@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-components
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  # Keep deployed platform resources if this ApplicationSet is deleted
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - matrix:
+        generators:
+          # Every cluster registered in Argo CD (names must match overlays/<name>: prod, non-prod)
+          - clusters: {}
+          # One Application per component folder under overlays/<cluster>/
+          - git:
+              repoURL: https://github.com/<org>/platform-configuration.git
+              revision: main
+              directories:
+                - path: 'overlays/{{ .name }}/*'
+  template:
+    metadata:
+      name: '{{ .name }}-{{ .path.basename }}'
+      labels:
+        cluster: '{{ .name }}'
+        component: '{{ .path.basename }}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/<org>/platform-configuration.git
+        targetRevision: main
+        path: '{{ .path.path }}'
+      destination:
+        server: '{{ .server }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          # Lets operator CRs (e.g. LokiStack) sync before the operator has installed the CRD
+          - SkipDryRunOnMissingResource=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m
